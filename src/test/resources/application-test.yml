@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/taxi_test}
+
+# Тесты запускают раунды вручную, фоновое расписание мешало бы им.
+taksi:
+  dispatch:
+    enabled: false

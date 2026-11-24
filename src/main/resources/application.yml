@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: taksi-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/taxi}
+    username: ${DB_USERNAME:${USER}}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # схему создаёт только Flyway; Hibernate лишь сверяет её с сущностями
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+  task:
+    scheduling:
+      pool:
+        size: 2   # раунды подбора и очистка пинов не ждут друг друга
+
+# Параметры учебной модели (слайды 5, 7, 11). Значения условные.
+taksi:
+  route:
+    avg-speed-kmh: 24        # прогноз: T = D / средняя скорость
+    road-factor: 1.3         # дорога длиннее прямой линии примерно на 30%
+    min-distance-km: 0.1
+    max-distance-km: 200
+  surge:
+    alpha: 0.4               # k = 1 + alpha * (r - 1)
+    k-max: 3.0
+    pin-window: 10m          # пины считаются за последние 10 минут
+    cell-size-deg: 0.01      # зона ≈ 1,1 км по широте
+    neighbor-radius: 1       # сглаживание: зона + соседние (3×3)
+    pin-retention: 1h        # старые пины удаляются
+  pickup:
+    search-radius-km: 5      # где ищем ближайшего свободного водителя для прогноза подачи
+    long-pickup-min: 6.7     # «дальняя подача» — сверх 6,7 мин и 3,5 км (слайд 6)
+    long-pickup-km: 3.5
+  quote:
+    ttl: 5m
+  dispatch:
+    enabled: true            # раунды подбора по расписанию
+    interval: 5s             # буфер: заказы копятся 5 с, затем распределяются вместе
+    max-orders-per-round: 50 # ограничение размера матрицы (венгерский алгоритм O(n³))
+    max-drivers-per-group: 200
+    max-pickup-km: 10        # дальше — пара запрещена
+    offer-timeout: 60s       # водитель не принял предложение → заказ снова в поиске
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
